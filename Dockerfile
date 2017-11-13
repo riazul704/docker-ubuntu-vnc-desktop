@@ -40,7 +40,9 @@ ADD image /
 RUN pip install setuptools wheel && pip install -r /usr/lib/web/requirements.txt
 
 EXPOSE 80
-EXPOSE 1550
+EXPOSE 3306
+EXPOSE 22
+EXPOSE 6090
 WORKDIR /root
 ENV HOME=/home/ubuntu \
     SHELL=/bin/bash
