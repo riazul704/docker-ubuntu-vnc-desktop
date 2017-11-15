@@ -39,10 +39,35 @@ RUN chmod +x /bin/tini
 ADD image /
 RUN pip install setuptools wheel && pip install -r /usr/lib/web/requirements.txt
 
+# Install XAMPP
+RUN curl -o xampp-linux-installer.run "https://downloadsapachefriends.global.ssl.fastly.net/xampp-files/5.6.21/xampp-linux-x64-5.6.21-0-installer.run?from_af=true"
+RUN chmod +x xampp-linux-installer.run
+RUN bash -c './xampp-linux-installer.run'
+RUN ln -sf /opt/lampp/lampp /usr/bin/lampp
+
+# Enable XAMPP web interface(remove security checks)
+RUN sed -i.bak s'/Require local/Require all granted/g' /opt/lampp/etc/extra/httpd-xampp.conf
+
+# Enable includes of several configuration files
+RUN mkdir /opt/lampp/apache2/conf.d && \
+    echo "IncludeOptional /opt/lampp/apache2/conf.d/*.conf" >> /opt/lampp/etc/httpd.conf
+
+# Create a /www folder and a symbolic link to it in /opt/lampp/htdocs. It'll be accessible via http://localhost:[port]/www/
+# This is convenient because it doesn't interfere with xampp, phpmyadmin or other tools in /opt/lampp/htdocs
+RUN mkdir /www
+RUN ln -s /www /opt/lampp/htdocs/
+
+# Set root password
+# password hash generated using this command: openssl passwd -1 -salt xampp root
+RUN sed -ri 's/root\:\*/root\:\$1\$xampp\$5\/7SXMYAMmS68bAy94B5f\./g' /etc/shadow
+
+VOLUME [ "/var/log/mysql/", "/var/log/apache2/" ]
+
 EXPOSE 80
 EXPOSE 3306
 EXPOSE 22
 EXPOSE 6090
+
 WORKDIR /root
 ENV HOME=/home/ubuntu \
     SHELL=/bin/bash
